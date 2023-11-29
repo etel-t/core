@@ -357,7 +357,10 @@ function local_user_set(&$user, $force_password = false, $userattrs = null)
     /* admins access gives wheely rights */
     if (userIsAdmin($user['name'])) {
         $user_group = 'wheel';
+    } else {
+        $user_shell = '/usr/sbin/nologin';
     }
+
     // XXX: primary group id can only be wheel or nobody, otherwise we should map the correct numbers for comparison
     $user_gid = $user_group == 'wheel' ? 0 : 65534;
 
