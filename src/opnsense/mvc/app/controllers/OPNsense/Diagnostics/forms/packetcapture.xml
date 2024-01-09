@@ -75,6 +75,6 @@
        <id>packetcapture.settings.description</id>
        <label>Description</label>
        <type>text</type>
-       <help>Description to be displayed in the "jobs" tab.</help>
+       <help>Select the protocol to capture, or Any.</help>
     </field>
 </form>

@@ -120,7 +120,7 @@
 }
 
 .tokenize > .tokens-container > .token > .dismiss:after {
-    content: "\00D7";
+    content: "×";
 }
 
 .tokenize > .tokens-container > .token.pending-delete > .dismiss {

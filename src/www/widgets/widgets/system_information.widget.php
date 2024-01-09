@@ -180,12 +180,7 @@ require_once("system.inc");
       <td><?=gettext("Versions");?></td>
       <td id="system_information_widget_versions"></td>
     </tr>
-    <tr>
-      <td><?= gettext('Updates') ?></td>
-      <td>
-        <a href='/ui/core/firmware#checkupdate'><span id="system_information_widget_firmware"><?= gettext('Retrieving internal update status...') ?></span></a>
-      </td>
-    </tr>
+   
     <tr>
       <td><?=gettext("CPU type");?></td>
       <td id="system_information_widget_cpu_type"></td>

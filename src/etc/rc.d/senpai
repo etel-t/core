@@ -1,0 +1,84 @@
+#!/bin/sh
+
+# PROVIDE: senpai
+# REQUIRE: NETWORKING SERVERS
+#
+# Please add the following line to /etc/rc.conf.local or /etc/rc.conf to
+# enable the zenarmor-agent service(s):
+#
+# zenarmoragent_enable (bool):  Set to "YES" by default.
+#                         Set it to "NO" to disable zenarmor-agent at boot.
+#
+
+. /etc/rc.subr
+
+if [ -d "/usr/local/zenarmor" ]; then
+    ZENARMOR_AGENT_ROOT="/usr/local/zenarmor"
+else
+   ZENARMOR_AGENT_ROOT="/usr/local/sensei"
+fi
+
+ZENARMOR_AGENT_PATH="${ZENARMOR_AGENT_ROOT}/zenarmor-agent/bin/zenarmor-agent -s"
+
+name=senpai
+rcvar=senpai_enable
+
+command="${ZENARMOR_AGENT_ROOT}/zenarmor-agent/bin/zenarmor-agent-supervisor"
+pidfile="${ZENARMOR_AGENT_ROOT}/run/zenarmor-agent.pid"
+command_args="-d -f \"${ZENARMOR_AGENT_PATH}\" -p ${pidfile}"
+
+load_rc_config "${name}"
+
+: ${senpai_enable="YES"}
+
+
+start_precmd="${name}_prestart"
+stop_postcmd="${name}_poststop"
+
+senpai_prestart() {
+
+    # cleanup pid file if we'd crashed or kill if it is already running
+    if [ -f "$pidfile" ]; then
+        zenarmoragent_pid=$(cat "$pidfile")
+
+        # check if pid is running?
+        if kill -0 $zenarmoragent_pid; then
+            echo "zenarmoragent: cloud agent is already running"
+            return 1
+        fi
+
+        for pid in `ps -xfwww | grep -E "/bin/zenarmor-agent" | grep -v "grep"| awk '{print $1}'`
+        do
+            echo "zenarmoragent: sending TERM to the stale process: $pid"
+            kill -15 $pid
+        done
+	sleep 1
+
+        for pid in `ps -xfwww | grep -E "/bin/zenarmoragent" | grep -v "grep"| awk '{print $1}'`
+        do
+            echo "zenarmoragent: sending KILL to the stale process: $pid"
+            kill -9 $pid
+        done
+
+        # remove absolute pid file
+        rm -f "$pidfile"
+    fi
+    return 0
+}
+
+senpai_poststop() {
+
+    for pid in `ps -xfwww | grep -E "/bin/zenarmor-agent" | grep -v "grep"| awk '{print $1}'`
+    do
+        echo "zenarmoragent: sending KILL to the stale process: $pid"
+        kill -9 $pid
+    done
+
+    if [ -f "$pidfile" ]; then
+        rm -f "$pidfile"
+    fi
+
+    return 0
+}
+
+run_rc_command "$1"

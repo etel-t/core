@@ -126,8 +126,6 @@ if __name__ == '__main__':
                 blocklist_items['config']['rcode'] = cnf.get('settings', 'rcode')
         if cnf.has_section('blocklists'):
             for blocklist in cnf['blocklists']:
-                list_type = blocklist.split('_', 1)
-                bl_shortcode = 'Custom' if list_type[0] == 'custom' else list_type[1]
                 file_stats = {'uri': cnf['blocklists'][blocklist], 'skip' : 0, 'blocklist': 0, 'lines' :0}
                 for line in uri_reader(cnf['blocklists'][blocklist]):
                     file_stats['lines'] += 1
@@ -145,7 +143,9 @@ if __name__ == '__main__':
                         else:
                             if domain_pattern.match(domain):
                                 file_stats['blocklist'] += 1
-                                blocklist_items['data'][entry] = {"bl": bl_shortcode}
+                                # We write an empty dictionary as value for now.
+                                # In the future we might want to add context per fqdn
+                                blocklist_items['data'][entry] = {}
                             else:
                                 file_stats['skip'] += 1
 
@@ -165,5 +165,5 @@ if __name__ == '__main__':
     os.replace('/var/unbound/data/dnsbl.json.new', '/var/unbound/data/dnsbl.json')
 
     syslog.syslog(syslog.LOG_NOTICE, "blocklist download done in %0.2f seconds (%d records)" % (
-        time.time() - startup_time, len(blocklist_items['data'])
+        time.time() - startup_time, len(blocklist_items)
     ))

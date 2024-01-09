@@ -138,7 +138,7 @@ function unbound_generate_config()
 
     $optimization = unbound_optimization();
 
-    $module_config = 'python ';
+    $module_config = '';
     $anchor_file = '';
     $dns64_config = '';
 
@@ -153,10 +153,10 @@ function unbound_generate_config()
         $module_config .= 'dns64 ';
     }
     if (isset($config['unbound']['dnssec'])) {
-        $module_config .= 'validator iterator';
+        $module_config .= 'python validator iterator';
         $anchor_file = 'auto-trust-anchor-file: /var/unbound/root.key';
     } else {
-        $module_config .= 'iterator';
+        $module_config .= 'python iterator';
     }
 
     $private_addr = "";

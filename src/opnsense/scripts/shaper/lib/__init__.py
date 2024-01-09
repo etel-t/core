@@ -112,7 +112,7 @@ def parse_ipfw_pipes():
                 " (?P<sched_buckets>[0-9]*) buckets (?P<sched_active>[0-9]*) active",
                 line
             )
-            if m and current_pipe:
+            if m:
                 current_pipe['scheduler'] = m.groupdict()
         elif line.find('__Source') > 0:
             current_pipe_header = True
@@ -142,7 +142,7 @@ def parse_ipfw_queues():
             current_queue_header = True
         else:
             flow_stats = parse_flow(line)
-            if flow_stats and current_queue:
+            if flow_stats:
                 current_queue['flows'].append(flow_stats)
 
     return trim_dict(result)
@@ -167,7 +167,7 @@ def parse_ipfw_scheds():
                 " (?P<sched_buckets>[0-9]*) buckets (?P<sched_active>[0-9]*) active",
                 line
             )
-            if m and current_sched:
+            if m:
                 current_sched.update(m.groupdict())
         elif line.find('Children flowsets') > 0:
             current_sched['children'] = line[22:].split()

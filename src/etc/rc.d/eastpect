@@ -1,0 +1,144 @@
+#!/bin/sh
+
+# PROVIDE: eastpect
+# REQUIRE: NETWORKING SERVERS wireguard
+# KEYWORD: eastpect
+#
+# Please add the following line to /etc/rc.conf.local or /etc/rc.conf to
+# enable the eastpect service(s):
+#
+# eastpectc (bool):  Set to "YES" by default.
+#                         Set it to "NO" to disable eastpect at boot.
+#
+
+. /etc/rc.subr
+
+if [ -d "/usr/local/zenarmor" ]; then
+    ZENARMOR_ROOT="/usr/local/zenarmor/"
+else
+    ZENARMOR_ROOT="/usr/local/sensei/"
+fi
+
+
+TMPFS_IPDR_DIRECTORY="${ZENARMOR_ROOT}output/active/temp"
+
+name=eastpect
+rcvar=eastpect_enable
+
+command="${ZENARMOR_ROOT}/bin/${name}"
+command_args="-D"
+pidfile="${ZENARMOR_ROOT}/run/${name}.pid"
+
+load_rc_config "${name}"
+
+: ${eastpect_enable="YES"}
+
+required_files="${ZENARMOR_ROOT}/etc/eastpect.cfg"
+
+start_precmd="${name}_prestart"
+start_postcmd="${name}_poststart"
+stop_postcmd="${name}_poststop"
+
+kill_eastpect_byprocess() {
+    is_eastpect_running
+    if [ $EASTPECT_RUNNING -eq 1 ]; then
+        VN=$(uname -r | awk -F '.' '{ print $1 }')
+        if [ $VN = "13" ]; then
+            MASTER_PID=$(ps -xfwww | grep -v -E "grep|elasticsearch|health|(\.sh)|(\.py)" | grep "${name} -D" | cut -d" " -f1)
+        fi    
+        if [ $VN = "12" ]; then
+            MASTER_PID=$(ps -xfwww | grep -v -E "grep|elasticsearch|health|*\.sh|*\.py" | grep "${name} -D" | cut -d" " -f1)
+        fi    
+        if [ ! -z $MASTER_PID ]; then
+            kill $MASTER_PID
+        fi
+        sleep 2
+    fi
+    is_eastpect_running
+    if [ $EASTPECT_RUNNING -eq 1 ]; then
+        killall -9 eastpect
+        STREAMER_MASTER_PID=$(ps -xfwww | grep -v grep | grep ipdrstreamer | cut -d" " -f1)
+        if [ ! -z $STREAMER_MASTER_PID ]; then
+            kill -9 $STREAMER_MASTER_PID
+        fi
+        sleep 2
+    fi
+}
+
+is_eastpect_running() {
+    VN=$(uname -r | awk -F '.' '{ print $1 }')
+    if [ $VN = "13" ]; then
+        CN=$(ps -auxwww | grep -v -E "grep|elasticsearch|health|(\.sh)|(\.py)" | grep eastpect | wc -l)
+    fi    
+    if [ $VN = "12" ]; then
+        CN=$(ps -auxwww | grep -v -E "grep|elasticsearch|health|(*.sh)|(*.py)" | grep eastpect | wc -l)
+    fi    
+    if [ $CN -gt 0 ]; then
+        EASTPECT_RUNNING=1
+    else
+        EASTPECT_RUNNING=0
+    fi
+}
+
+
+mount_tmpfs() {
+    TMPFS_MEMORY="50m"
+
+    TEMPSIZE=$(grep "TempSize = " $required_files|awk -F' = ' '{ print $2 }')
+    if [ ! -z $TEMPSIZE ]; then
+        TMPFS_MEMORY=$TEMPSIZE"m"
+    fi
+
+    ALREADY_MOUNTED=$(/sbin/mount  | grep "${TMPFS_IPDR_DIRECTORY}")
+    if [ -z "$ALREADY_MOUNTED" ]; then
+        if [ -c /dev/md43 ]; then
+            /sbin/mdconfig -d -u md43
+        fi
+        /sbin/mdconfig -a -t swap -s ${TMPFS_MEMORY} -u 43
+        /sbin/newfs -U md43
+        /sbin/mount /dev/md43 ${TMPFS_IPDR_DIRECTORY}
+    fi
+}
+
+eastpect_prestart() {
+    # cleanup pid file if we'd crashed or kill if it is already running
+    if [ -f "$pidfile" ]; then
+        eastpect_pid=$(cat "$pidfile")
+
+        # check if pid is running?
+        if kill -0 $eastpect_pid; then
+            echo "eastpect is already running"
+            return 1
+        fi
+
+        kill_eastpect_byprocess
+
+        # remove absolute pid file
+        rm -f "$pidfile"
+    fi
+
+    mount_tmpfs
+
+    rm -f "${ZENARMOR_ROOT}/output/active/temp/"* 2> /dev/null
+
+    return 0
+}
+
+eastpect_poststart() {
+    # sleep 7
+    return 0
+}
+
+eastpect_poststop() {
+    kill_eastpect_byprocess
+
+    if [ -f "$pidfile" ]; then
+        rm -f "$pidfile"
+    fi
+
+    # sleep 5
+
+    return 0
+}
+
+run_rc_command "$1"

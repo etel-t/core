@@ -203,8 +203,8 @@
   </sysctl>
   <system>
     <optimization>normal</optimization>
-    <hostname>OPNsense</hostname>
-    <domain>localdomain</domain>
+    <hostname>ReachGuard</hostname>
+    <domain>cloudetel</domain>
     <dnsallowoverride>1</dnsallowoverride>
     <group>
       <name>admins</name>

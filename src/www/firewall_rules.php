@@ -718,13 +718,13 @@ $( document ).ready(function() {
                           <?=!empty($filterent['from']) ? $filterent['from'] : "*";?>
                       </td>
                       <td class="view-info hidden-xs hidden-sm">
-                          <?=isset($filterent['from_port']) ? $filterent['from_port'] : "*";?>
+                          <?=!empty($filterent['from_port']) ? $filterent['from_port'] : "*";?>
                       </td>
                       <td class="view-info hidden-xs hidden-sm">
                           <?=!empty($filterent['to']) ? $filterent['to'] : "*";?>
                       </td>
                       <td class="view-info hidden-xs hidden-sm">
-                          <?=isset($filterent['to_port']) ? $filterent['to_port'] : "*";?>
+                          <?=!empty($filterent['to_port']) ? $filterent['to_port'] : "*";?>
                       </td>
                       <td class="view-info hidden-xs hidden-sm">
                         <?= !empty($filterent['gateway']) ? $filterent['gateway'] : "*";?>
